@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Salin Nomor Rekening</title>
+<style>
+  :root{
+    --bg:#f3f6fb;
+    --card:#ffffff;
+    --muted:#6b7280;
+    --accent:#0f1724;
+    --btn:#0b1320;
+    --ok:#10b981;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial;
+    background:var(--bg);
+    margin:0;
+    padding:32px;
+    color:var(--accent);
+  }
+  .wrap{max-width:900px;margin:0 auto}
+  .card{
+    background:var(--card);
+    border-radius:18px;
+    padding:28px;
+    box-shadow:0 18px 50px rgba(15,23,42,0.06);
+  }
+  h1{margin:0 0 6px 0;font-size:1.35rem}
+  .lead{color:var(--muted);margin:0 0 18px 0}
+  .account{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    padding:12px;
+    border-radius:14px;
+    border:1.5px solid rgba(15,23,42,0.06);
+    background:#fff;
+    margin-bottom:10px;
+  }
+  .logo{
+    width:42px;
+    height:42px;
+    object-fit:contain;
+    flex-shrink:0;
+    border-radius:8px;
+    background:#fff;
+  }
+  .left{flex:1;min-width:0}
+  .acc-title{
+    font-weight:700;
+    font-size:0.98rem;
+    margin-bottom:4px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .acc-sub{color:var(--muted);font-size:0.9rem}
+  .acc-number{
+    display:inline-block;
+    margin-top:8px;
+    padding:10px 14px;
+    border-radius:12px;
+    border:2px solid #0b0b0b;
+    font-size:1.05rem;
+    letter-spacing:0.02em;
+    background:linear-gradient(180deg,#fff,#fbfdff);
+    user-select:text;
+  }
+  .btn{
+    background:var(--btn);
+    color:#fff;
+    border-radius:12px;
+    padding:10px 14px;
+    border:0;
+    cursor:pointer;
+    font-weight:600;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    transition:0.15s;
+  }
+  .btn:hover{
+    opacity:0.9;
+    transform:translateY(-1px);
+  }
+  .small{font-size:0.85rem;color:var(--muted);margin-top:8px}
+  #toast{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    background:var(--ok);
+    color:#fff;
+    padding:10px 14px;
+    border-radius:999px;
+    display:none;
+    box-shadow:0 8px 30px rgba(16,185,129,0.2);
+  }
+  @media(max-width:520px){
+    .account{flex-direction:column;align-items:flex-start}
+    .btn{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Salin Nomor Rekening</h1>
+      <p class="lead">Klik tombol <strong>Salin</strong> pada metode pembayaran yang diinginkan.</p>
+
+      <div id="list"></div>
+
+      <p class="small">
+  Terimakasih, harap konfirmasi kembali di whatsapp ya 😊 </p>
+    </div>
+  </div>
+
+  <div id="toast">✅ Nomor disalin</div>
+
+<script>
+/*
+  === EDIT DI SINI ===
+  Tambah atau ubah daftar rekening / e-wallet.
+  Format: { label, name, number, logo }
+*/
+const ACCOUNTS = [
+  {
+    label: "DANA",
+    name: "Ilham Nurfaudzi",
+    number: "085186813381",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/5/52/Dana_logo.png"
+  },
+  {
+    label: "Bank BRI",
+    name: "Ilham Nurfaudzi",
+    number: "799301005183532",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/f/f5/BANK_BRI_logo_%28vertical%29.svg"
+  },
+  {
+    label: "Permata Bank",
+    name: "Ilham Nurfaudzi",
+    number: "1231536309",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Permata_Bank_%282024%29.svg"
+  },
+  {
+    label: "GoPay",
+    name: "Ilham Nurfaudzi",
+    number: "085186813381",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/archive/8/86/20210529064535%21Gopay_logo.svg"
+  },
+  {
+    label: "ShopePay",
+    name: "Ilham Nurfaudzi",
+    number: "085186813381",
+    logo: "https://static.wikia.nocookie.net/logopedia/images/8/86/ShopeePay_logo.svg/revision/latest?cb=20211116095235"
+  },
+  {
+    label: "SeaBank",
+    name: "Ilham Nurfaudzi",
+    number: "901827321910",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/a/ac/SeaBank.svg"
+  }
+];
+
+const listEl = document.getElementById("list");
+const toast = document.getElementById("toast");
+
+function showToast(text="Nomor disalin"){
+  toast.textContent = "✅ " + text;
+  toast.style.display = "flex";
+  setTimeout(()=> toast.style.display="none", 1600);
+}
+
+async function copyToClipboard(text){
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  }
+}
+
+function render(){
+  listEl.innerHTML = "";
+  ACCOUNTS.forEach(acc => {
+    const row = document.createElement("div");
+    row.className = "account";
+
+    const logo = document.createElement("img");
+    logo.className = "logo";
+    logo.src = acc.logo || "";
+    logo.alt = acc.label;
+
+    const left = document.createElement("div");
+    left.className = "left";
+    left.innerHTML = `
+      <div class="acc-title">${acc.label}</div>
+      <div class="acc-sub">${acc.name}</div>
+      <div class="acc-number">${acc.number}</div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.className = "btn";
+    btn.innerHTML = "📋 Salin";
+    btn.onclick = async () => {
+      await copyToClipboard(acc.number);
+      showToast("Nomor " + acc.label + " disalin");
+    };
+
+    row.appendChild(logo);
+    row.appendChild(left);
+    row.appendChild(btn);
+    listEl.appendChild(row);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
